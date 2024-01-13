@@ -289,6 +289,6 @@ class ExtractData(MariadbConnector):
         data_df = pd.merge(data_df, capteur, on='IdCapteur', how='right')
         # join data_df with bac
         data_df = pd.merge(data_df, bac, on='IdBac', how='right')
-        return data_df
+        return data_df.sort_values(by='ConvTimeStamp', ascending=False, inplace=True)
     
 if __name__ == 'main':
