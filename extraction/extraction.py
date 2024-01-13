@@ -132,7 +132,7 @@ class ExtractData(MariadbConnector):
             }
             ```
         """
-        query = f"SELECT * FROM {database}.{table} ORDER BY utctimestamp ASC LIMIT 50" # extraction de l'intégralité des données
+        query = f"SELECT * FROM {database}.{table} ORDER BY utctimestamp ASC" # extraction de l'intégralité des données
         results = self.query_mariadb(query=query)
         rowNb = 0
         for rowNb in range(len(results)): # pour chaque ligne dans la table
@@ -259,7 +259,7 @@ class ExtractData(MariadbConnector):
             
         """
         if table in ['data', 'data2', 'capteur', 'bac']:
-            query = f"SELECT * FROM {database}.{table} LIMIT 50"
+            query = f"SELECT * FROM {database}.{table}"
             result = self.query_mariadb(query=query)
             columns = self.dict_structure[database][table]
             if (table == 'data' or table =='data2'):
@@ -292,3 +292,5 @@ class ExtractData(MariadbConnector):
         return data_df.sort_values(by='ConvTimeStamp', ascending=False, inplace=True)
     
 if __name__ == 'main':
+    extract = ExtractData(MariadbConnector)
+    extract._save_as_ndjson()
