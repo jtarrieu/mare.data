@@ -13,8 +13,9 @@ class Test_Extract(unittest.TestCase):
             ("value4", "value5", "value6"),
         ]
 
-        extractor.query_mariadb = MagicMock(return_value = mock_result)
+        extractor.query_mariadb = MagicMock(return_value = mock_result) # MagicMock allow to force the method query_mariadb to return mock_result
 
+        # manually define the structure 
         extractor.dict_structure = {
             'fake_db' : {
                 'table_1': ['col_1', 'col_2', 'col_3']
@@ -38,6 +39,7 @@ class Test_Extract(unittest.TestCase):
 
         result = extractor._get_data_Njoin(document, 'fake_db', 'table_1')
 
+        # assert statement to check that the function result and the expected one are the same
         self.assertEqual(result, expected_result)
 
 if __name__ == '__main__':
