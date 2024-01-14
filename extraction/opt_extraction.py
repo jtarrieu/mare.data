@@ -4,8 +4,7 @@ import pandas as pd
 import os
 import json
 from tqdm import tqdm 
-import var # import variable configured into var.py
-import utils # import function from utils.py
+from extraction import var, utils
 
 class MariadbConnector:
     """
@@ -149,7 +148,7 @@ class ExtractData(MariadbConnector):
             }
             ```
         """
-        query = f"SELECT * FROM {database}.{table} ORDER BY 'utctimestamp' ASC LIMIT 10" # extract all data ordered by timestamp ascending
+        query = f"SELECT * FROM {database}.{table} ORDER BY 'utctimestamp' ASC" # extract all data ordered by timestamp ascending
         results = self.query_mariadb(query=query)
         rowNb = 0
         for rowNb in range(len(results)): # for each row in the table
@@ -161,13 +160,13 @@ class ExtractData(MariadbConnector):
                         columnNb+=1 # go to next column
         return document
 
-    def _save_as_ndjson(self, batch_size=500000, batch_size_dict=5000):
+    def _save_as_ndjson(self, batch_size=500000):
         """
             execute both methods that save as ndjson databases content
             batch_size define the size of rows' batches to write the content in ndjson format
         """
-        #self._save_no_join(batch_size=batch_size)
-        self._save_with_join(batch_size_dict=batch_size_dict)
+        self._save_no_join(batch_size=batch_size)
+        self._save_with_join()
 
 
     def _save_no_join(self, batch_size):
@@ -185,7 +184,7 @@ class ExtractData(MariadbConnector):
             document[db] = dict()
             for table in tqdm(self.dict_structure[db].keys(), desc=f'Extracting table from {db}'):
                 # create one file per each table
-                #file_path = f'{db}/{table}.ndjson'
+                # file_path = f'{db}/{table}.ndjson'
                 file_path = f'{db}/test_{table}.ndjson'
                 document[db][table] = dict()
                 
@@ -203,7 +202,7 @@ class ExtractData(MariadbConnector):
                                 f.write(json.dumps(entry, default=utils.nan_serializer) + '\n')
                 del document[db][table] # free up memory usage when all the content has been saved
     
-    def _save_with_join(self, batch_size_dict):
+    def _save_with_join(self):
         """
             Save the content of databases that require their table to be joined
             !! need to implement functions like _mouleconnected_to_dict() and _join_mouleconnected() per each specific database_Wjoin
@@ -219,6 +218,8 @@ class ExtractData(MariadbConnector):
                     for table in self.dict_structure[db].keys():
                         document = self._mouleconnected_to_dict(document=document, database=db, table=table)
                     dataframe = self._join_mouleconnected(document)
+                    dataframe = dataframe.groupby('ConvTimeStamp')
+                    tms_col_name = 'ConvTimeStamp'
                     del document # free up memory usage by deleting the dict used 
                 case 'another_database_of_your_choice':
                     for table in self.dict_structure[db].keys():
@@ -229,75 +230,48 @@ class ExtractData(MariadbConnector):
                         pass
                 case _:
                     raise "no method implemented yet for this database"
-            content = self._df_to_dict(dataframe)
-            self._save_dict_to_ndjson(content, batch_size_dict, db)
+            idx = 0
+            for name, group in tqdm(dataframe, total=len(dataframe), desc=f'Processing {db}'):
+                group.drop(tms_col_name, axis=1, inplace=True)
+                result_dict = {}
+                item_key = f'item_{idx}'
+                result_dict[item_key] = {}
+                result_dict[item_key]['timestamp'] = str(name)
+                record_nb = 0
+                for index, row in group.iterrows():
+                    record_key = f'record_{record_nb}'
+                    result_dict[item_key][record_key] = {}
+                    for col, value in row.items():
+                        result_dict[item_key][record_key][col]= str(value)
+                    record_nb +=1
+                self._save_dict_to_ndjson(result_dict, db)
+                idx += 1
 
-    def _df_to_dict(self, dataframe, tms_col_name='ConvTimeStamp'):
+    def _save_dict_to_ndjson(self, data_dict, db_name):
         """
-            take a dataframe as entry and return a dict
-            tms_col_name is the name of the column that contain information about the timestamp of the record ; default to 'ConvTimeStamp'
+            data_dict is a dictionnary with the following structure
             ```python
-            {
-                'state' : identifier_value,
-                'item_0': {
-                    'timestamp' : value,
-                    'records' : {
-                        'record_0':{
-                            dataframe_col1 : value,
-                            dataframe_col2 : value,
-                            ...
-                        },
-                        'record_1':{
-                            dataframe_col1 : value,
-                            dataframe_col2 : value,
-                            ...
-                        }
+                {
+                    item_1 : {
+                        timestamp : value,
+                        records : {
+                            record_1 : {
+                                field_1 : value,
+                                fiel_2 : value,
+                                ...
+                            }
+                        }   
+                    },
+                    item_2 : {
+                        ...
                     }
-                },
-                'item_1' :{
-                    ...
                 }
-            }
             ```
-            state is used only to identify if actual record has the same timestamp as the previous one or not
-            item_nb contains all records from a same timestamp
         """
-        df_as_dict = dict()
-        i = 0
-        df_as_dict['state'] = 0
-        for index, row in dataframe.iterrows():
-            if pd.notna(row[tms_col_name]):
-                if row[tms_col_name] != df_as_dict['state']:
-                    df_as_dict['state'] = row[tms_col_name]
-                    item = f'item_{i}'
-                    i+=1
-                    df_as_dict[item] = {}
-                    df_as_dict[item]['timestamp'] = row[tms_col_name]
-                    df_as_dict[item]['records'] = {}
-                    record_nb = 0
-                else:
-                    record_nb += 1
-                record_value = f'record_{record_nb}'
-                df_as_dict[item]['records'][record_value]={}
-                for col, value in row.items():
-                    if col != tms_col_name:
-                        df_as_dict[item]['records'][record_value][col] = value 
-        return df_as_dict
-
-    def _save_dict_to_ndjson(self, data_dict, batch_size_dict, db_name):
-        """
-            data_dict is return by _df_to_dict
-        """
-        items = list(data_dict.items())
-        # create batches of element in the dictionnary
-        batches = [items[i:i+batch_size_dict] for i in tqdm(range(1,len(data_dict), batch_size_dict), desc='Creating batches')]
-        # browse batches
-        for i, batch in enumerate(batches):
-        # save the content of the bacth in a file
-            with open(f'{db_name}.ndjson', 'a') as f:
-                for key, value in batch:
-                    entry = {key:value}
-                    f.write(json.dumps(entry, default=utils.nan_serializer) + '\n')
+        with open(f'{db_name}.ndjson', 'a') as f:
+            for item_key, item_value in data_dict.items():
+                json.dump({item_key: item_value}, f)
+                f.write('\n')
 
     def _mouleconnected_to_dict(self, document, database, table):
         """
@@ -313,7 +287,7 @@ class ExtractData(MariadbConnector):
             ```
         """
         if table in ['data', 'data2', 'capteur', 'bac']: # keep only useful table
-            query = f"SELECT * FROM {database}.{table} LIMIT 10" # retrieve content in the table
+            query = f"SELECT * FROM {database}.{table} " # retrieve content in the table
             result = self.query_mariadb(query=query)
             columns = self.dict_structure[database][table] # retrieve list of columns
             if (table == 'data' or table =='data2'):
@@ -353,5 +327,5 @@ class ExtractData(MariadbConnector):
         return data_df
 
     
-extract = ExtractData(['mouleconnected'], ['meteo1'])
-extract._save_as_ndjson()
+# extract = ExtractData(['mouleconnected'], ['meteo1'])
+# extract._save_as_ndjson()
