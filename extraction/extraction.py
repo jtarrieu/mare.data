@@ -149,7 +149,7 @@ class ExtractData(MariadbConnector):
             }
             ```
         """
-        query = f"SELECT * FROM {database}.{table} ORDER BY 'utctimestamp' ASC LIMIT 10" # extract all data ordered by timestamp ascending
+        query = f"SELECT * FROM {database}.{table} ORDER BY 'utctimestamp' ASC" # extract all data ordered by timestamp ascending
         results = self.query_mariadb(query=query)
         rowNb = 0
         for rowNb in range(len(results)): # for each row in the table
@@ -185,7 +185,7 @@ class ExtractData(MariadbConnector):
             document[db] = dict()
             for table in tqdm(self.dict_structure[db].keys(), desc=f'Extracting table from {db}'):
                 # create one file per each table
-                #file_path = f'{db}/{table}.ndjson'
+                #file_path = f'{db}/{table}.ndjson' #! uncomment and comment next in prod
                 file_path = f'{db}/test_{table}.ndjson'
                 document[db][table] = dict()
                 
@@ -313,7 +313,7 @@ class ExtractData(MariadbConnector):
             ```
         """
         if table in ['data', 'data2', 'capteur', 'bac']: # keep only useful table
-            query = f"SELECT * FROM {database}.{table} LIMIT 10" # retrieve content in the table
+            query = f"SELECT * FROM {database}.{table}" # retrieve content in the table
             result = self.query_mariadb(query=query)
             columns = self.dict_structure[database][table] # retrieve list of columns
             if (table == 'data' or table =='data2'):

@@ -3,7 +3,8 @@ import sys
 import pandas as pd
 import os
 import json
-from tqdm import tqdm 
+from tqdm import tqdm
+import argparse
 from extraction import var, utils
 
 class MariadbConnector:
@@ -160,7 +161,7 @@ class ExtractData(MariadbConnector):
                         columnNb+=1 # go to next column
         return document
 
-    def _save_as_ndjson(self, batch_size=500000):
+    def save_as_ndjson(self, batch_size=500000):
         """
             execute both methods that save as ndjson databases content
             batch_size define the size of rows' batches to write the content in ndjson format
@@ -268,7 +269,7 @@ class ExtractData(MariadbConnector):
                 }
             ```
         """
-        with open(f'{db_name}.ndjson', 'a') as f:
+        with open(f'test_{db_name}.ndjson', 'a') as f:
             for item_key, item_value in data_dict.items():
                 json.dump({item_key: item_value}, f)
                 f.write('\n')
@@ -287,7 +288,7 @@ class ExtractData(MariadbConnector):
             ```
         """
         if table in ['data', 'data2', 'capteur', 'bac']: # keep only useful table
-            query = f"SELECT * FROM {database}.{table} " # retrieve content in the table
+            query = f"SELECT * FROM {database}.{table}" # retrieve content in the table
             result = self.query_mariadb(query=query)
             columns = self.dict_structure[database][table] # retrieve list of columns
             if (table == 'data' or table =='data2'):
@@ -326,6 +327,15 @@ class ExtractData(MariadbConnector):
         data_df = data_df.sort_values(by='ConvTimeStamp', ascending=False, inplace=False)
         return data_df
 
+
+if __name__ == "__main__":
     
-# extract = ExtractData(['mouleconnected'], ['meteo1'])
-# extract._save_as_ndjson()
+    parser = argparse.ArgumentParser()
+    
+    parser.add_argument("database_Wjoin", help="list of databases' names as string that require join operation")
+    parser.add_argument("database_Njoin", help="list of databases' names as string that do not require join operation")
+    
+    args = parser.parse_args()
+
+    extract = ExtractData(database_Wjoin=args.database_Wjoin, database_Njoin=args.database_Njoin)
+    extract._save_as_ndjson()
