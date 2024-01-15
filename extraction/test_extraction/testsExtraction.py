@@ -42,5 +42,6 @@ class Test_Extract(unittest.TestCase):
         # assert statement to check that the function result and the expected one are the same
         self.assertEqual(result, expected_result)
 
+
 if __name__ == '__main__':
     unittest.main()

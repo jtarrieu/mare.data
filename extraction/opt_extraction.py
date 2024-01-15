@@ -31,7 +31,7 @@ class MariadbConnector:
                                 user=var.user,
                                 password=var.password,
                                 host=var.host,
-                                port=3308,
+                                port=3306,
             )
         except mariadb.Error as e :
             print(f"Error connecting to MariaDB Platform: {e}")
@@ -149,7 +149,7 @@ class ExtractData(MariadbConnector):
             }
             ```
         """
-        query = f"SELECT * FROM {database}.{table} ORDER BY 'utctimestamp' ASC" # extract all data ordered by timestamp ascending
+        query = f"SELECT * FROM {database}.{table} ORDER BY 'utctimestamp' ASC LIMIT 5000" # extract all data ordered by timestamp ascending
         results = self.query_mariadb(query=query)
         rowNb = 0
         for rowNb in range(len(results)): # for each row in the table
@@ -288,7 +288,7 @@ class ExtractData(MariadbConnector):
             ```
         """
         if table in ['data', 'data2', 'capteur', 'bac']: # keep only useful table
-            query = f"SELECT * FROM {database}.{table}" # retrieve content in the table
+            query = f"SELECT * FROM {database}.{table} LIMIT 5000" # retrieve content in the table
             result = self.query_mariadb(query=query)
             columns = self.dict_structure[database][table] # retrieve list of columns
             if (table == 'data' or table =='data2'):
@@ -336,6 +336,8 @@ if __name__ == "__main__":
     parser.add_argument("database_Njoin", help="list of databases' names as string that do not require join operation")
     
     args = parser.parse_args()
+    database_Wjoin_list = args.database_Wjoin.split(',')
+    database_Njoin_list = args.database_Njoin.split(',')
 
-    extract = ExtractData(database_Wjoin=args.database_Wjoin, database_Njoin=args.database_Njoin)
-    extract._save_as_ndjson()
+    extract = ExtractData(database_Wjoin=database_Wjoin_list, database_Njoin=database_Njoin_list)
+    extract.save_as_ndjson()
