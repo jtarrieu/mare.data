@@ -1,20 +1,12 @@
-<style>
-  body {
-    font-size: 16px; /* Change the desired font size */
-  }
-  code {
-    font-size: 14px;
-  }
-</style>
-
 # MARE.DATA
-## Extract data from MariaDB| Extraction de la donnée présente sur MariaDB
+## Extract data from MariaDB | Extraction de la donnée présente sur MariaDB
 
-## [English version](#Englishversion)
-## [French version](#Frenchversion)
+## <a href="#Englishversion">English version</a>
+## <a href="#Frenchversion">Version en Français</a>
 
 This branch implement the extraction of data from MariaDb and save it into ndjson files. The ndjson like data will be used in another branch to be inserted into ElasticSearch.
-## [English version](#Englishversion)
+<h2 id="Englishversion"> English version</h2>
+
 ## CONTENT
 
 - MARE.DATA (root directory)
@@ -22,7 +14,7 @@ This branch implement the extraction of data from MariaDb and save it into ndjso
     - extraction.py **(first OOP script for extraction)**
     - opt_extraction.py **(optimized version of extraction.py)**
     - utils.py **(useful functions that should not be implemented in extraction script)**
-    - var.py **(variables required to connect to mariadb server)**
+    - var.py **(variables required to connect to mariadb server ⚠️ need to modify based on your mariaDB config)**
     - test_extraction
       - testsExtraction.py **(implementation of unittest for opt_extraction.py)**
   - ressources
@@ -88,7 +80,7 @@ To run tests navigate to the root folder of the extraction branch and run the fo
 **⚠️As a streaming pipeline will be implemented in parallel to fill ElasticSearch in 'real-time' we need to extract only the data that has been added to MariaDB before the implementation of the streaming pipeline. Add a WHERE statement in SQL query based on timestamp value.**
 
 
-## [Version en français](#Frenchversion)
+<h2 id="Frenchversion">Version en Français</h2>
 
 Cette branche implémente l'extraction de la donnée présente sur MariaDB et la sauvegarde dans des fichiers ndjson. L'insertion des fichiers ndjson dans ElasticSearch est prise en charge dans une autre branche du projet.
 
@@ -100,7 +92,7 @@ Cette branche implémente l'extraction de la donnée présente sur MariaDB et la
     - extraction.py **(première version de l'extraction en POO)**
     - opt_extraction.py **(version optimisée de extraction.py)**
     - utils.py **(fonctions nécessaires mais sans lien direct avec l'extraction)**
-    - var.py **(variables nécessaire à la connexion au serveur mariaDB)**
+    - var.py **(variables nécessaire à la connexion au serveur mariaDB ⚠️ à modifier conformément à la configuration mariaDB)**
     - test_extraction
       - testsExtraction.py **(implementation des tests unitaires pour opt_extraction.py)**
   - ressources
