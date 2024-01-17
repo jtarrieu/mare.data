@@ -1,0 +1,5 @@
+# user = "maredata"
+# password = "m@reD4t4"
+user = "root"
+password = "admin"
+host = "172.30.0.2"
