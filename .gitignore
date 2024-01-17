@@ -1,2 +1,6 @@
 **.ipynb_checkpoints**
 data/*
+**.cache/pip**
+**.ipython**
+**.local**
+**.npm**
