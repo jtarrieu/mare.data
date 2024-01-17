@@ -4,3 +4,5 @@ data/*
 **.ipython**
 **.local**
 **.npm**
+**.jupyter**
+**.python_history**
