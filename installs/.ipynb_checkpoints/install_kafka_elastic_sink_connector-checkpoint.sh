@@ -5,6 +5,8 @@
 connector_url="https://d1i4a15mxbxib1.cloudfront.net/api/plugins/confluentinc/kafka-connect-elasticsearch/versions/14.0.11/confluentinc-kafka-connect-elasticsearch-14.0.11.zip"
 connector_name="confluentinc-kafka-connect-elasticsearch-14.0.11.zip"
 
+# creating the connector file
+mkdir connectors
 # going to the dir connector
 cd connectors
 
