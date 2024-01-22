@@ -33,7 +33,7 @@ services:
     environment:
       - xpack.security.enabled=false
       - discovery.type=single-node
-      - ES_JAVA_OPTS=-Xms5g -Xmx15g
+      - ES_JAVA_OPTS=-Xms1g -Xmx1g
 
 # Kibana
   kibana:
@@ -137,17 +137,18 @@ services:
       - zookeeper
       - kafka
       - kafka-rest-proxy
-# Jupyter IDE
-  jupyter:
-    image: jupyter/base-notebook
-    container_name: jupyter
-    networks:
-      - mare_data_network
-    ports:
-      - "8888:8888"
-    command: start-notebook.sh --NotebookApp.token=''
-    volumes:
-      - .:/home/jovyan/
+
+## Jupyter IDE
+#  jupyter:
+#    image: jupyter/base-notebook
+#    container_name: jupyter
+#    networks:
+#      - mare_data_network
+#    ports:
+#      - "8888:8888"
+#    command: start-notebook.sh --NotebookApp.token=''
+#    volumes:
+#      - .:/home/jovyan/
 
 # MariaDB
   maria:
@@ -189,6 +190,13 @@ services:
     restart: always
     depends_on:
       - kafka
+    develop:
+      watch:
+        - action: sync
+          path: ./udp-server/
+          target: /app/
+        - action: rebuild
+          path: package.json
 
 # UDP Client 1
   udp-client-1:
