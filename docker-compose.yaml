@@ -20,6 +20,7 @@ volumes:
 # Services
 services:
 
+# DATABASE AND VIZ
 # ElasticSearch
   elasticsearch:
     image: docker.elastic.co/elasticsearch/elasticsearch:8.10.2
@@ -33,7 +34,7 @@ services:
     environment:
       - xpack.security.enabled=false
       - discovery.type=single-node
-      - ES_JAVA_OPTS=-Xms1g -Xmx1g
+      - ES_JAVA_OPTS=-Xms2g -Xmx4g
 
 # Kibana
   kibana:
@@ -51,6 +52,7 @@ services:
     environment:
       - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
 
+## STREAMING
 # Kafka Zookeeper
   zookeeper:
     image: confluentinc/cp-zookeeper:7.1.3
@@ -139,46 +141,7 @@ services:
       - kafka
       - kafka-rest-proxy
 
-# Jupyter IDE
-  jupyter:
-    image: jupyter/base-notebook
-    container_name: jupyter
-    networks:
-      - mare_data_network
-    ports:
-      - "8888:8888"
-    command: start-notebook.sh --NotebookApp.token=''
-    volumes:
-      - .:/home/jovyan/
-
-# MariaDB
-  maria:
-    image: mariadb:latest
-    container_name: maria
-    networks:
-      - mare_data_network
-    environment:
-      MYSQL_ROOT_PASSWORD: admin
-      MYSQL_USER: maredata
-      MYSQL_PASSWORD: m@reD4T4
-    ports:
-      - "3306:3306"
-    volumes:
-     - ./data:/data
-     - maria-data:/var/lib/mysql
-
-# PHP My Admin
-  phpmyadmin:
-    image: phpmyadmin
-    container_name: phpmyadmin
-    networks:
-      - mare_data_network
-    restart: always
-    ports:
-      - "8080:80"
-    environment:
-      - PMA_ARBITRARY=1
-
+## DATA SIMULATION
 # UDP Server
   udp-server:
     build:
@@ -204,6 +167,7 @@ services:
     networks:
       - mare_data_network
 
+# TEST STREAMING WITH 2 SENSORS
 # UDP Client 2
   udp-client-2:
     build:
@@ -214,17 +178,59 @@ services:
     networks:
       - mare_data_network
 
-# python extraction
-  python-extraction:
-    build:
-      context: ./python-extraction/
-    depends_on:
-      - maria
-    container_name: python-extraction
-    networks:
-      - mare_data_network
-    volumes:
-      - ./data_gen/:/data:rw
-      - ./extraction:/extraction:rw
+## TO EDIT ON A VM WITH SSH ONLY
+# # Jupyter IDE
+#   jupyter:
+#     image: jupyter/base-notebook
+#     container_name: jupyter
+#     networks:
+#       - mare_data_network
+#     ports:
+#       - "8888:8888"
+#     command: start-notebook.sh --NotebookApp.token=''
+#     volumes:
+#       - .:/home/jovyan/
+
+## DATA MIGRATION CONTAINERS
+# # MariaDB
+#   maria:
+#     image: mariadb:latest
+#     container_name: maria
+#     networks:
+#       - mare_data_network
+#     environment:
+#       MYSQL_ROOT_PASSWORD: admin
+#       MYSQL_USER: maredata
+#       MYSQL_PASSWORD: m@reD4T4
+#     ports:
+#       - "3306:3306"
+#     volumes:
+#      - ./data:/data
+#      - maria-data:/var/lib/mysql
+
+# # PHP My Admin
+#   phpmyadmin:
+#     image: phpmyadmin
+#     container_name: phpmyadmin
+#     networks:
+#       - mare_data_network
+#     restart: always
+#     ports:
+#       - "8080:80"
+#     environment:
+#       - PMA_ARBITRARY=1
+
+# # python extraction
+#   python-extraction:
+#     build:
+#       context: ./python-extraction/
+#     depends_on:
+#       - maria
+#     container_name: python-extraction
+#     networks:
+#       - mare_data_network
+#     volumes:
+#       - ./data_gen/:/data:rw
+#       - ./extraction:/extraction:rw
 
 # end of file.

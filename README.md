@@ -108,6 +108,18 @@ f2dffa43db27   mariadb:latest                                         "docker-en
 a4ee3b9626cc   phpmyadmin                                             "/docker-entrypoint.…"   4 days ago   Up 4 days               0.0.0.0:8080->80/tcp, :::8080->80/tcp                           phpmyadmin
 df9ca7f95dde   jupyter/base-notebook                                  "tini -g -- start-no…"   4 days ago   Up 4 days (unhealthy)   0.0.0.0:8888->8888/tcp, :::8888->8888/tcp                       jupyter
 ```
+## Containers
+- kibana
+- elastic
+- kafka & kafka-rest-proxy
+- kafka-connect
+- udp server (main server)
+- udp client (sensor)
+
+The most important container is the UDP server. It creates the index in elastic add the data mapping, and creates a kafka-connector to elastic. And send the data received via UDP to kafka.
+
+It is normal that the container crashes few time when starting the container, it is because elastic and kafka initialization is finished yet.
+
 ## Docker commands
 Restart a container (empty name to restart all the containers):
 ```bash
