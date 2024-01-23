@@ -67,6 +67,12 @@ cd installs
 ```
 If it doesn't work you can follow the steps of the [offical docker engine install doc](https://docs.docker.com/engine/install/)
 
+#### Install Kafka Elastic Sink Connector
+Run the following bash script to install the kafka to elastic sink connector.
+```bsh
+cd mare.data
+./installs/install_kafka_elastic_sink_connector.sh
+```
 ### Run
 First make sure docker is running.
 ```bash
