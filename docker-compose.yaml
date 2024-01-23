@@ -100,6 +100,7 @@ services:
     depends_on:
       - zookeeper
       - kafka
+
 # Kafka Connect
   kafka-connect:
     image: confluentinc/cp-kafka-connect:7.2.1
@@ -138,17 +139,17 @@ services:
       - kafka
       - kafka-rest-proxy
 
-## Jupyter IDE
-#  jupyter:
-#    image: jupyter/base-notebook
-#    container_name: jupyter
-#    networks:
-#      - mare_data_network
-#    ports:
-#      - "8888:8888"
-#    command: start-notebook.sh --NotebookApp.token=''
-#    volumes:
-#      - .:/home/jovyan/
+# Jupyter IDE
+  jupyter:
+    image: jupyter/base-notebook
+    container_name: jupyter
+    networks:
+      - mare_data_network
+    ports:
+      - "8888:8888"
+    command: start-notebook.sh --NotebookApp.token=''
+    volumes:
+      - .:/home/jovyan/
 
 # MariaDB
   maria:

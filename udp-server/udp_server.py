@@ -8,14 +8,6 @@ from typing import Tuple
 
 logging.basicConfig(level=logging.INFO)
 
-def kafka_connect_setup() -> Tuple[str]:
-    connect_url = "http://kafka-connect:8083"  # URL to your Kafka Connect REST API
-    # headers for the http requests
-    headers = {
-        "Content-Type": "application/json; charset=utf-8",
-        "Accept": "application/json"
-    }
-    return connect_url, headers
 
 def create_kafka_producer(bootstrap_servers) -> KafkaProducer:
     try:
@@ -24,7 +16,13 @@ def create_kafka_producer(bootstrap_servers) -> KafkaProducer:
         logging.error(f"Error creating Kafka producer: {e}")
         raise
 
-def create_kafka_elastic_sink_connector(connect_url:str, headers:str, connector_config:dict) -> None:
+def create_kafka_elastic_sink_connector(connector_config:dict) -> None:
+    connect_url = "http://kafka-connect:8083"  # URL to your Kafka Connect REST API
+    # headers for the http requests
+    headers = {
+        "Content-Type": "application/json; charset=utf-8",
+        "Accept": "application/json"
+    }
     # Create the connector
     response = requests.post(f"{connect_url}/connectors/",
                             headers=headers,
@@ -84,14 +82,15 @@ def get_meteo_mapping() -> dict:
 def push_mapping_to_index(mapping:str, index:str, host:str) -> bool:
     # Create the index with mapping
     index_url = f"{host}/{index}"
+    logging.info('pushing mapping to index')
     response = requests.put(index_url, json=mapping)
-
+    logging.info(f'pushing response: {response.text}')
     # Check the response status
     if response.status_code == 200:
-        print(f"Index '{index}' created successfully.")
+        logging.info(f"Index '{index}' created successfully.")
         return True
     else:
-        print(f"Failed to create index. Status code: {response.status_code}, Response: {response.text}")
+        logging.error(f"Failed to create index. Status code: {response.status_code}, Response: {response.text}")
         return False
 
 def create_udp_socket(server_address, server_port):
@@ -104,31 +103,26 @@ def create_udp_socket(server_address, server_port):
         raise
 
 def main():
-
+    logging.info('starting the udp server')
     elastic_url= 'http://elasticsearch:9200' # URL to Elasticsearch REST API
     elastic_index = 'meteo'
-    kafka_connect_url, headers = kafka_connect_setup()
     kafka_bootstrap_servers = 'kafka:19092'
     kafka_topic = 'meteo'
 
     # Pushing the mapping to the index
-    
     meteo_mapping = get_meteo_mapping()
     push_mapping_to_index(meteo_mapping, elastic_index, elastic_url)
 
-
     # Creating the kafka sik connector to elastic search
     connector_config = kafka_elastic_connector_config(elastic_index, kafka_topic)
-    create_kafka_elastic_sink_connector(kafka_connect_url, headers, connector_config)
+    create_kafka_elastic_sink_connector(connector_config)
 
-
-    # Create the kafka producer and the UDP socket
-
-# try:
+    # Create the kafka producer
     # Configuration Kafka
     kafka_bootstrap_servers = 'kafka:19092'
     kafka_topic = 'meteo'
 
+    # Creating the UDP server
     # Configuration UDP
     udp_server_address = '0.0.0.0'
     udp_server_port = 20001
@@ -137,32 +131,30 @@ def main():
     producer = create_kafka_producer(kafka_bootstrap_servers)
     udp_socket = create_udp_socket(udp_server_address, udp_server_port)
 
-    #     logging.info(f'UDP server up and running on {udp_server_address}:{udp_server_port}, forwarding to Kafka topic {kafka_topic}')
-# except Exception as e:
-    #     logging.error(f"Error Creating the kafka producer and/or the udp socket: {e}.")
+    logging.info(f'UDP server up and running on {udp_server_address}:{udp_server_port}, forwarding to Kafka topic {kafka_topic}')
 
-    try:
-        while True:
-            # Receive a UDP message
-            message, address = udp_socket.recvfrom(1024)
-            current_time = datetime.now()
-            formatted_time = current_time.strftime("%Y-%m-%d %H:%M:%S")
-            logging.info(f'Received UDP message from {address} at {formatted_time}')
+    # try:
+    while True:
+        # Receive a UDP message
+        message, address = udp_socket.recvfrom(1024)
+        current_time = datetime.now()
+        formatted_time = current_time.strftime("%Y-%m-%d %H:%M:%S")
+        logging.info(f'Received UDP message from {address} at {formatted_time}')
 
-            try:
-                # Send the message to Kafka
-                producer.send(kafka_topic, value=message)
-                # logging.info(f'Sent to Kafka topic: {kafka_topic}')
-            except Exception as kafka_error:
-                logging.error(f"Error sending message to Kafka: {kafka_error}")
+            # try:
+        # Send the message to Kafka
+        producer.send(kafka_topic, value=message)
+        # logging.info(f'Sent to Kafka topic: {kafka_topic}')
+            # except Exception as kafka_error:
+            #     logging.error(f"Error sending message to Kafka: {kafka_error}")
 
-    except KeyboardInterrupt:
-        logging.info("Script terminated by user.")
+    # except KeyboardInterrupt:
+    #     logging.info("Script terminated by user.")
 
-    finally:
+    # finally:
         # Close the UDP socket and Kafka producer in case of termination
-        udp_socket.close()
-        producer.close()
+    udp_socket.close()
+    producer.close()
 
 if __name__ == '__main__':
     main()
