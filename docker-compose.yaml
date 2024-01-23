@@ -190,13 +190,8 @@ services:
     restart: always
     depends_on:
       - kafka
-    develop:
-      watch:
-        - action: sync
-          path: ./udp-server/
-          target: /app/
-        - action: rebuild
-          path: package.json
+    volumes:
+      - ./udp-server/:/app
 
 # UDP Client 1
   udp-client-1:
