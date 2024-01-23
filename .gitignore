@@ -6,4 +6,4 @@ data/*
 **.npm**
 **.jupyter**
 **.python_history**
-./connectors
+./connectors/**
